@@ -8,9 +8,16 @@ import (
 
 type HALDocument Resource
 
-// MarshalJSON implements the json.Marshaler interface.
+// MarshalJSON implements the json.Marshaler interface. The result is
+// appropriate for the "application/hal+json" media type.
 func (h HALDocument) MarshalJSON() ([]byte, error) {
 	return json.Marshal(halResource(h))
+}
+
+// UnmarshalJSON implements the json.Unmarshaler interface. The input should
+// be of the "application/hal+json" media type.
+func (h *HALDocument) UnmarshalJSON(data []byte) (err error) {
+	return json.Unmarshal(data, (*halResource)(h))
 }
 
 type halLinkField struct {
@@ -85,6 +92,35 @@ func (h halLinks) MarshalJSON() ([]byte, error) {
 	return json.Marshal(o)
 }
 
+// UnmarshalJSON implements the json.Unmarshaler interface.
+func (h *halLinks) UnmarshalJSON(data []byte) (err error) {
+	var o map[Relation]json.RawMessage
+	if err = json.Unmarshal(data, &o); err != nil {
+		return
+	}
+	if o == nil {
+		return &json.UnmarshalTypeError{Value: "null", Type: reflect.TypeOf(h)}
+	}
+
+	for rel, data := range o {
+		var l []Link
+		if err = json.Unmarshal(data, &l); err != nil {
+			var l Link
+			if err = json.Unmarshal(data, &l); err != nil {
+				return
+			}
+
+			(*h)[rel] = []Link{l}
+		} else if l == nil {
+			return &json.UnmarshalTypeError{Value: "null", Type: reflect.TypeOf(l)}
+		} else {
+			(*h)[rel] = l
+		}
+	}
+
+	return
+}
+
 // MarshalJSON implements the json.Marshaler interface.
 func (h halResources) MarshalJSON() ([]byte, error) {
 	o := make(map[Relation]interface{})
@@ -107,6 +143,37 @@ func (h halResources) MarshalJSON() ([]byte, error) {
 	return json.Marshal(o)
 }
 
+// UnmarshalJSON implements the json.Unmarshaler interface.
+func (h *halResources) UnmarshalJSON(data []byte) (err error) {
+	var o map[Relation]json.RawMessage
+	if err = json.Unmarshal(data, &o); err != nil {
+		return
+	}
+	if o == nil {
+		return &json.UnmarshalTypeError{Value: "null", Type: reflect.TypeOf(h)}
+	}
+
+	for rel, data := range o {
+		var r []*halResource
+		if err = json.Unmarshal(data, &r); err != nil {
+			var r *halResource
+			if err = json.Unmarshal(data, &r); err != nil {
+				return
+			}
+
+			(*h)[rel] = []*Resource{(*Resource)(r)}
+		} else if r == nil {
+			return &json.UnmarshalTypeError{Value: "null", Type: reflect.TypeOf(r)}
+		} else {
+			for _, r := range r {
+				(*h)[rel] = append((*h)[rel], (*Resource)(r))
+			}
+		}
+	}
+
+	return
+}
+
 // MarshalJSON implements the json.Marshaler interface.
 func (h halResource) MarshalJSON() ([]byte, error) {
 	o := make(map[string]interface{})
@@ -122,4 +189,41 @@ func (h halResource) MarshalJSON() ([]byte, error) {
 	}
 
 	return json.Marshal(o)
+}
+
+// UnmarshalJSON implements the json.Unmarshaler interface.
+func (h *halResource) UnmarshalJSON(data []byte) (err error) {
+	var o map[string]json.RawMessage
+	if err = json.Unmarshal(data, &o); err != nil {
+		return
+	}
+	if o == nil {
+		return &json.UnmarshalTypeError{Value: "null", Type: reflect.TypeOf(h)}
+	}
+
+	r := NewResource()
+
+	if data, ok := o["_links"]; ok {
+		delete(o, "_links")
+		if err = json.Unmarshal(data, (*halLinks)(&r.Links)); err != nil {
+			return
+		}
+	}
+
+	if data, ok := o["_embedded"]; ok {
+		delete(o, "_embedded")
+		if err = json.Unmarshal(data, (*halResources)(&r.Embedded)); err != nil {
+			return
+		}
+	}
+
+	for k, data := range o {
+		var v interface{}
+		json.Unmarshal(data, &v)
+		r.Attributes[k] = v
+	}
+
+	*h = halResource(*r)
+
+	return
 }
