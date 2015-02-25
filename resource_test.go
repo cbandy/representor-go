@@ -7,16 +7,16 @@ import (
 
 func TestLinksAdd(t *testing.T) {
 	links := make(Links)
-	links.Add("a", Link{Href: "b"})
+	links.Add("a", Link{"href": "b"})
 
-	expected := Links{"a": []Link{{Href: "b"}}}
+	expected := Links{"a": []Link{{"href": "b"}}}
 	if !reflect.DeepEqual(links, expected) {
 		t.Errorf("Expected %+v, got %+v", expected, links)
 	}
 }
 
 func TestLinksDel(t *testing.T) {
-	links := Links{"a": []Link{{Href: "b"}}}
+	links := Links{"a": []Link{{"href": "b"}}}
 	links.Del("a")
 
 	expected := Links{}
@@ -26,10 +26,10 @@ func TestLinksDel(t *testing.T) {
 }
 
 func TestLinksSet(t *testing.T) {
-	links := Links{"a": []Link{{Href: "b"}}}
-	links.Set("a", Link{Href: "c"})
+	links := Links{"a": []Link{{"href": "b"}}}
+	links.Set("a", Link{"href": "c"})
 
-	expected := Links{"a": []Link{{Href: "c"}}}
+	expected := Links{"a": []Link{{"href": "c"}}}
 	if !reflect.DeepEqual(links, expected) {
 		t.Errorf("Expected %+v, got %+v", expected, links)
 	}
@@ -38,16 +38,16 @@ func TestLinksSet(t *testing.T) {
 func TestLinksGetEmpty(t *testing.T) {
 	link := make(Links).Get("a")
 
-	if !reflect.DeepEqual(link, Link{}) {
-		t.Errorf("Expected empty Link, got %+v", link)
+	if link != nil {
+		t.Errorf("Expected nil, got %+v", link)
 	}
 }
 
 func TestLinksGet(t *testing.T) {
-	link := Links{"a": []Link{{Href: "b"}}}.Get("a")
+	link := Links{"a": []Link{{"href": "b"}}}.Get("a")
 
-	expected := Link{Href: "b"}
-	if link != expected {
+	expected := Link{"href": "b"}
+	if !reflect.DeepEqual(link, expected) {
 		t.Errorf("Expected %+v, got %+v", expected, link)
 	}
 }

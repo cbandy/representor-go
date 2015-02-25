@@ -20,15 +20,14 @@ var HALDocumentJSONTests = []struct {
 		}}},
 	{[]byte(`{"_links":{"a":{"href":"xyz"},"b":[{"name":"j:k"},{"templated":true}]}}`),
 		HALDocument{Links: Links{
-			"a": {{Href: "xyz"}},
-			"b": {{Name: "j:k"}, {Templated: true}},
+			"a": {{"href": "xyz"}},
+			"b": {{"name": "j:k"}, {"templated": true}},
 		}}},
 
-	//// TODO sort link fields
-	//{[]byte(`{"_links":{"curies":[{"name":"pre","href":"any","templated":true}]}}`),
-	//	HALDocument{Links: Links{
-	//		"curies": {{Name: "pre", Href: "any", Templated: true}},
-	//	}}},
+	{[]byte(`{"_links":{"curies":[{"href":"any","name":"pre","templated":true}]}}`),
+		HALDocument{Links: Links{
+			"curies": {{"name": "pre", "href": "any", "templated": true}},
+		}}},
 
 	{[]byte(`{"_embedded":{"a":{"x":"y"},"b":[{"c":"d"},{}]}}`),
 		HALDocument{Embedded: Resources{
@@ -57,7 +56,7 @@ func TestHALDocumentMarshalJSONExcludesEmptyTransitions(t *testing.T) {
 	}{
 		{[]byte(`{"_links":{"a":{"href":"xyz"}}}`),
 			HALDocument{Links: Links{
-				"a": {{Href: "xyz"}},
+				"a": {{"href": "xyz"}},
 				"n": {},
 			}}},
 		{[]byte(`{"_embedded":{"a":{"x":"y"}}}`),

@@ -3,11 +3,7 @@ package hypermedia
 type Attributes map[string]interface{}
 type Relation string
 
-type Link struct {
-	Deprecation, Href, HrefLang, Name, Profile, Title, Type string
-
-	Templated bool
-}
+type Link map[string]interface{}
 
 type Links map[Relation][]Link
 
